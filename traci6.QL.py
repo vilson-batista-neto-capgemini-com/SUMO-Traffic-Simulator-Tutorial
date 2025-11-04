@@ -22,8 +22,8 @@ import traci  # Static network information (such as reading and analyzing networ
 
 # Step 4: Define Sumo configuration
 Sumo_config = [
-    'sumo-gui',
-    '-c', 'C:/Users/caurel/OneDrive - Capgemini/Documents/Python/SUMO/RL.sumocfg',
+    'C:/Program Files (x86)/Eclipse/Sumo/bin/sumo-gui.exe',
+    '-c', 'C:/route25/SUMOCFG/RL.sumocfg',
     '--step-length', '0.10',
     '--delay', '1000',
     '--lateral-resolution', '0'

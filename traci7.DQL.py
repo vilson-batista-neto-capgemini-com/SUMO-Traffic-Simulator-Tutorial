@@ -6,8 +6,6 @@ import numpy as np
 import matplotlib.pyplot as plt  # Visualization
 import datetime
 
-
-
 # Step 1.1: (Additional) Imports for Deep Q-Learning
 import tensorflow as tf
 from tensorflow import keras
@@ -25,8 +23,8 @@ import traci  # Static network information (such as reading and analyzing networ
 
 # Step 4: Define Sumo configuration
 Sumo_config = [
-    'sumo',
-    '-c', 'C:/Users/caurel/OneDrive - Capgemini/Documents/Python/SUMO/RL.sumocfg',
+    'C:/Program Files (x86)/Eclipse/Sumo/bin/sumo.exe',
+    '-c', 'C:/route25/SUMOCFG/RL.sumocfg',
     '--step-length', '0.10',
     '--delay', '1000',
     '--lateral-resolution', '0'
@@ -50,8 +48,7 @@ q_SB_2 = 0
 current_phase = 0
 
 # ---- Reinforcement Learning Hyperparameters ----
-TOTAL_STEPS = 10000
-# The total number of simulation steps for continuous (online) training.
+TOTAL_STEPS = 10000    # The total number of simulation steps for continuous (online) training.
 
 ALPHA = 0.1            # Learning rate (α) between[0, 1]    #If α = 1, you fully replace the old Q-value with the newly computed estimate.
                                                             #If α = 0, you ignore the new estimate and never update the Q-value.

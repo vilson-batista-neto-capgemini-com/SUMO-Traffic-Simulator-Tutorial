@@ -8,25 +8,34 @@ import numpy as np
 import matplotlib.pyplot as plt  # Visualization
 import datetime
 
+def get_os_environ(os_environ_name, default_value):
+    if not os_environ_name in os.environ:
+        os.environ.setdefault(os_environ_name, default_value)
+    return_value = os.environ[os_environ_name]
+    if not os.path.exists(return_value):
+        sys.exit("The path " + return_value + " does not exist.")
+    print("The path ", return_value, " exists.")
+    return return_value
 
+def get_os_environ_path(os_environ_name, os_base_environ_name, default_value_concat):
+    default_value = os.path.join(os.environ[os_base_environ_name], default_value_concat)
+    return get_os_environ(os_environ_name, default_value)
 
-
-
-
-# Step 2: Establish path to SUMO (SUMO_HOME)
-if 'SUMO_HOME' in os.environ:
-    tools = os.path.join(os.environ['SUMO_HOME'], 'tools')
-    sys.path.append(tools)
-else:
-    sys.exit("Please declare environment variable 'SUMO_HOME'")
+# Step 2: Establish path to SUMO (SUMO_HOME, SUMO_CFG, SUMO_TOOLS, SUMO_BIN, SUMO_GUI)
+sumo_cfg = get_os_environ('SUMO_CFG','C:/route25/SUMOCFG/RL.sumocfg')
+sumo_home = get_os_environ('SUMO_HOME','C:/Program Files (x86)/Eclipse/Sumo/')
+tools = get_os_environ_path('SUMO_TOOLS','SUMO_HOME','tools/')
+bin = get_os_environ_path('SUMO_BIN','SUMO_HOME','bin/')
+sys.path.append(bin)
+sumo_gui = get_os_environ_path('SUMO_GUI','SUMO_BIN','sumo-gui.exe')
 
 # Step 3: Add Traci module to provide access to specific libraries and functions
 import traci  # Static network information (such as reading and analyzing network files)
 
 # Step 4: Define Sumo configuration
 Sumo_config = [
-    'sumo-gui',
-    '-c', 'C:/Users/caurel/OneDrive - Capgemini/Documents/Python/SUMO/RL.sumocfg',
+    sumo_gui,
+    '-c', sumo_cfg,
     '--step-length', '0.10',
     '--delay', '1000',
     '--lateral-resolution', '0'
@@ -293,7 +302,9 @@ for step in range(TOTAL_STEPS):
 # -------------------------
 # Step 9: Close connection between SUMO and Traci
 # -------------------------
+print("TraCI will close now")
 traci.close()
+print("TraCI is closed now")
 
 # Print final Q-table info
 print("\nOnline Training completed. Final Q-table size:", len(Q_table))
