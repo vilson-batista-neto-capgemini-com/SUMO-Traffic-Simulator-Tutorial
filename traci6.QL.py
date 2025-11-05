@@ -1,37 +1,34 @@
 # Step 1: Add modules to provide access to specific libraries and functions
-import os  # Module provides functions to handle file paths, directories, environment variables
-import sys  # Module provides access to Python-specific system parameters and functions
 import random
 import numpy as np
 import matplotlib.pyplot as plt  # Visualization
 import datetime
+from osenviron import get_os_environ, get_os_environ_path, sys_path_append
 
-
-
-
-
-# Step 2: Establish path to SUMO (SUMO_HOME)
-if 'SUMO_HOME' in os.environ:
-    tools = os.path.join(os.environ['SUMO_HOME'], 'tools')
-    sys.path.append(tools)
-else:
-    sys.exit("Please declare environment variable 'SUMO_HOME'")
+# Step 2: Establish path to SUMO (SUMO_HOME, SUMO_CFG, SUMO_TOOLS, SUMO_BIN, SUMO_GUI)
+sumo_cfg = get_os_environ('SUMO_CFG','C:/route25/SUMOCFG/RL.sumocfg')
+sumo_home = get_os_environ('SUMO_HOME','C:/Program Files (x86)/Eclipse/Sumo/')
+tools = get_os_environ_path('SUMO_TOOLS','SUMO_HOME','tools/')
+bin = get_os_environ_path('SUMO_BIN','SUMO_HOME','bin/')
+sys_path_append(bin)
+sumo_gui = get_os_environ_path('SUMO_GUI','SUMO_BIN','sumo-gui.exe')
 
 # Step 3: Add Traci module to provide access to specific libraries and functions
-import traci  # Static network information (such as reading and analyzing network files)
+#import traci  # Static network information (such as reading and analyzing network files)
+from traciutils import get_reward, get_queue_length, get_waiting_time, get_current_phase, set_start_traci, set_close_traci, set_simulation_step_traci, set_traffic_light_phase_traci, get_first_traffic_light_program_logics, set_gui_schema_traci
 
 # Step 4: Define Sumo configuration
 Sumo_config = [
-    'C:/Program Files (x86)/Eclipse/Sumo/bin/sumo-gui.exe',
-    '-c', 'C:/route25/SUMOCFG/RL.sumocfg',
+    sumo_gui,
+    '-c', sumo_cfg,
     '--step-length', '0.10',
     '--delay', '1000',
     '--lateral-resolution', '0'
 ]
 
 # Step 5: Open connection between SUMO and Traci
-traci.start(Sumo_config)
-traci.gui.setSchema("View #0", "real world")
+set_start_traci(Sumo_config)
+set_gui_schema_traci("View #0", "real world")
 
 # -------------------------
 # Step 6: Define Variables
@@ -99,15 +96,6 @@ def get_max_Q_value_of_state(s): #1. Objective Function 1
         Q_table[s] = np.zeros(len(ACTIONS))
     return np.max(Q_table[s])
 
-def get_reward(state):  #2. Constraint 2 
-    """
-    Simple reward function:
-    Negative of total queue length to encourage shorter queues.
-    """
-    total_queue = sum(state[:-1])  # Exclude the current_phase element
-    reward = -float(total_queue)
-    return reward
-
 def get_state():  #3.& 4. Constraint 3 & 4
     global q_EB_0, q_EB_1, q_EB_2, q_SB_0, q_SB_1, q_SB_2, wt_EB_0, wt_EB_1, wt_EB_2, wt_SB_0, wt_SB_1, wt_SB_2, current_phase
     
@@ -163,10 +151,10 @@ def apply_action(action, tls_id="Node2"): #5. Constraint 5
     elif action == 1:
         # Check if minimum green time has passed before switching
         if current_simulation_step - last_switch_step >= MIN_GREEN_STEPS:
-            program = traci.trafficlight.getAllProgramLogics(tls_id)[0]
+            program = get_first_traffic_light_program_logics(tls_id)
             num_phases = len(program.phases)
             next_phase = (get_current_phase(tls_id) + 1) % num_phases
-            traci.trafficlight.setPhase(tls_id, next_phase)
+            set_traffic_light_phase_traci(tls_id, next_phase)
             last_switch_step = current_simulation_step
 
 
@@ -203,16 +191,6 @@ def get_action_from_policy(state): #7. Constraint 7
 
 
 
-def get_queue_length(detector_id): #8.Constraint 8
-    return traci.lanearea.getLastStepVehicleNumber(detector_id)
-
-def get_waiting_time(detector_id): #8.Constraint 8
-    return traci.lane.getWaitingTime(detector_id)
-
-
-def get_current_phase(tls_id): #8.Constraint 8
-    return traci.trafficlight.getPhase(tls_id)
-
 # -------------------------
 # Step 8: Fully Online Continuous Learning Loop
 # -------------------------
@@ -237,7 +215,7 @@ for step in range(TOTAL_STEPS):
     apply_action(action)
    # waitingTime = get_waiting_time(state)
 
-    traci.simulationStep()  # Advance simulation by one step
+    set_simulation_step_traci()  # Advance simulation by one step
     
     new_state = get_state()
 
@@ -288,7 +266,7 @@ for step in range(TOTAL_STEPS):
 # -------------------------
 # Step 9: Close connection between SUMO and Traci
 # -------------------------
-traci.close()
+set_close_traci()
 #Print final step
 if step == 999:
     print(f"Step {step}, Current_State: {state}, Action: {action}, New_State: {new_state}, Reward: {reward:.2f}, Cumulative Reward: {cumulative_reward:.2f}, Q-values(current_state): {updated_q_vals}, Cumulative Waiting time : {cumulative_waitingtime}")
