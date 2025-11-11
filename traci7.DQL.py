@@ -16,7 +16,8 @@ sumo_home = get_os_environ('SUMO_HOME','C:/Program Files (x86)/Eclipse/Sumo/')
 tools = get_os_environ_path('SUMO_TOOLS','SUMO_HOME','tools/')
 bin = get_os_environ_path('SUMO_BIN','SUMO_HOME','bin/')
 sys_path_append(bin)
-sumo_exe = get_os_environ_path('SUMO_GUI','SUMO_BIN','sumo.exe')
+sumo_gui = get_os_environ_path('SUMO_GUI','SUMO_BIN','sumo-gui.exe')
+sumo_exe = get_os_environ_path('SUMO_EXE','SUMO_BIN','sumo.exe')
 
 # Step 3: Add Traci module to provide access to specific libraries and functions
 #import traci  # Static network information (such as reading and analyzing network files)
@@ -24,11 +25,12 @@ from traciutils import get_reward, get_queue_length, get_waiting_time, get_curre
 
 # Step 4: Define Sumo configuration
 Sumo_config = [
-    sumo_exe,
-    '-c', sumo_cfg,
+    sumo_gui,
+    '--configuration-file', sumo_cfg,
     '--step-length', '0.10',
-    '--delay', '1000',
-    '--lateral-resolution', '0'
+    '--delay', '10',
+    '--lateral-resolution', '0',
+    '--start'
 ]
 
 # Step 5: Open connection between SUMO and Traci
